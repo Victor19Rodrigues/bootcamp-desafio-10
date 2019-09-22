@@ -3,7 +3,7 @@ import {withNavigationFocus} from 'react-navigation';
 import PropTypes from 'prop-types';
 import {Alert} from 'react-native';
 
-import {format, parseISO, isBefore, subDays, addDays} from 'date-fns';
+import {format, subDays, addDays} from 'date-fns';
 import pt from 'date-fns/locale/pt';
 
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -22,14 +22,16 @@ import {
 import Background from '~/components/Background';
 import Header from '~/components/Header';
 import Meetapp from '~/components/Meetapp';
+import Loading from '~/components/Loading';
+import EmptyList from '~/components/EmptyList';
 
 const per_page = 5;
 
 function Dashboard({isFocused}) {
     const [meetapps, setMeetapps] = useState([]);
     const [date, setDate] = useState(new Date());
+    const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(1);
-    const [total, setTotal] = useState(0);
     const [refreshing, setRefreshing] = useState(false);
 
     const dateFormatted = useMemo(
@@ -38,10 +40,8 @@ function Dashboard({isFocused}) {
     );
 
     async function loadMeetapps(pageNumber = page, shouldRefresh = false) {
-        if (total && pageNumber > total) {
-            return;
-        }
-        console.tron.log(date);
+        if (shouldRefresh) pageNumber = 1;
+
         const response = await api.get('meetups', {
             params: {
                 per_page,
@@ -50,23 +50,16 @@ function Dashboard({isFocused}) {
             },
         });
 
-        const data = response.data.map(meetapp => {
-            return {
-                ...meetapps,
-                past: isBefore(parseISO(meetapp.date), new Date()),
-            };
-        });
-
-        const totalItems = await response.data.count;
-
-        setTotal(Math.ceil(totalItems / per_page));
         setMeetapps(response.data);
         setPage(pageNumber + 1);
+
+        setLoading(false);
     }
 
     useEffect(() => {
         if (isFocused) {
-            loadMeetapps();
+            setLoading(true);
+            loadMeetapps(page, true);
         }
     }, [isFocused, date]);
 
@@ -83,6 +76,10 @@ function Dashboard({isFocused}) {
                 'Não é possivel se inscrever em um meetup que já foi realizado',
             );
         }
+    }
+
+    function handleLoadMeetappsOnRefresh() {
+        loadMeetapps(page, true);
     }
 
     function handlePrevDay() {
@@ -113,18 +110,25 @@ function Dashboard({isFocused}) {
                     </NextButton>
                 </Time>
 
-                <List
-                    data={meetapps}
-                    keyExtractor={item => String(item.id)}
-                    renderItem={({item}) => (
-                        <Meetapp
-                            data={item}
-                            handleSubmit={() => handleSubmit(item.id)}
+                {loading && <Loading />}
+
+                {!loading &&
+                    (meetapps.length ? (
+                        <List
+                            data={meetapps}
+                            keyExtractor={item => String(item.id)}
+                            renderItem={({item}) => (
+                                <Meetapp
+                                    data={item}
+                                    handleSubmit={() => handleSubmit(item.id)}
+                                />
+                            )}
+                            onRefresh={handleLoadMeetappsOnRefresh}
+                            refreshing={refreshing}
                         />
-                    )}
-                    onRefresh={loadMeetapps}
-                    refreshing={refreshing}
-                />
+                    ) : (
+                        <EmptyList>Não há meetapps para esta data!</EmptyList>
+                    ))}
             </Container>
         </Background>
     );

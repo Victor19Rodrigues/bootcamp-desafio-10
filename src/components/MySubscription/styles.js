@@ -41,40 +41,20 @@ export const InfoRow = styled.View`
   `}
 `;
 
-export const InfoText = styled.Text`
+export const Time = styled.Text`
     font-size: 14px;
     color: #888;
     margin-left: 6px;
-    max-width: 200px;
 `;
 
-export const TextPast = styled.Text`
-    font-size: 18px;
+export const Location = styled.Text`
+    font-size: 14px;
     color: #888;
-    padding: 10px;
-    background: #efef22;
-    border-color: #888;
-    text-align: center;
-    font-weight: bold;
-    margin-top: 10px;
-    border-radius: 4px;
-
-    align-items: center;
-    justify-content: center;
+    margin-left: 6px;
 `;
 
-export const TextSubscribe = styled.Text`
-    font-size: 18px;
-    color: #fff;
-    padding: 10px;
-    background: #4eba17;
-    border-color: #888;
-    text-align: center;
-    font-weight: bold;
-    margin-top: 10px;
-
-    border-radius: 4px;
-
-    align-items: center;
-    justify-content: center;
+export const Organizer = styled.Text`
+    font-size: 14px;
+    color: #888;
+    margin-left: 6px;
 `;

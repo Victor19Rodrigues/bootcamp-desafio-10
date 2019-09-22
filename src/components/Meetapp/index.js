@@ -1,14 +1,40 @@
-import React, {useMemo} from 'react';
+import React, {useMemo, useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import {format, parseISO} from 'date-fns';
 import pt from 'date-fns/locale/pt';
 
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import api from '~/services/api';
 
 import Button from '~/components/Button';
-import {Container, Banner, Info, Title, InfoRow, InfoText} from './styles';
+import {
+    Container,
+    Banner,
+    Info,
+    Title,
+    InfoRow,
+    InfoText,
+    TextPast,
+    TextSubscribe,
+} from './styles';
 
 export default function Meetup({data, handleSubmit}) {
+    const [subscribe, setSubscribe] = useState(false);
+
+    async function checkSubscribe() {
+        const response = await api.get('subscriptions');
+
+        const find = response.data.find(meetup => meetup.Meetup.id === data.id);
+
+        if (find) {
+            setSubscribe(true);
+        }
+    }
+
+    useEffect(() => {
+        checkSubscribe();
+    }, []);
+
     const dateParsed = useMemo(
         () =>
             format(parseISO(data.date), "dd 'de' MMMM ', às' HH:mm'h'", {
@@ -22,8 +48,9 @@ export default function Meetup({data, handleSubmit}) {
             <Banner
                 source={{
                     uri:
-                        data.File &&
-                        data.File.url.replace('localhost', '10.0.3.2'),
+                        data.file &&
+                        // data.File.url.replace('localhost', '10.0.3.2'),
+                        data.file.url.replace('localhost', '10.0.3.2'),
                 }}
             />
             <Info>
@@ -40,8 +67,13 @@ export default function Meetup({data, handleSubmit}) {
                     <Icon name="person" size={15} color="#999" />
                     <InfoText>Organizador: {data.User.name}</InfoText>
                 </InfoRow>
-
-                <Button onPress={handleSubmit}>Realizar inscrição</Button>
+                {data.past ? (
+                    <TextPast>Finalizado</TextPast>
+                ) : subscribe ? (
+                    <TextSubscribe>Inscrito</TextSubscribe>
+                ) : (
+                    <Button onPress={handleSubmit}>Realizar inscrição</Button>
+                )}
             </Info>
         </Container>
     );
@@ -51,7 +83,7 @@ Meetup.propTypes = {
     data: PropTypes.shape({
         past: PropTypes.bool.isRequired,
         date: PropTypes.string.isRequired,
-        File: PropTypes.shape({
+        file: PropTypes.shape({
             url: PropTypes.string.isRequired,
         }).isRequired,
         title: PropTypes.string.isRequired,
